@@ -1,10 +1,18 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
+	"strconv"
 )
+
+type Reponse struct {
+	Code   int    `json:"code"`
+	Result string `json:"result"`
+}
 
 // Docs
 // https://golang.org/pkg/net/http
@@ -17,7 +25,37 @@ import (
 func hello(w http.ResponseWriter, r *http.Request) {
 	// We use the standard libaries WriteStirng function to write back to the ResponseWriter interface
 	// See docs above
-	io.WriteString(w, fmt.Sprintf("%s %s", "hello", r.FormValue("name")))
+
+	name := r.FormValue("name")
+	var ResponseCode int
+	var ResponseStr string
+
+	if name == "" {
+		ResponseCode = 403
+		ResponseStr = "Please set a name"
+	} else if len(name) < 2 {
+		ResponseCode = 403
+		ResponseStr = "Please supply a name longer than 1 character"
+	} else {
+		ResponseCode = 200
+		ResponseStr = fmt.Sprintf("%s %s", "hello", r.FormValue("name"))
+	}
+
+	respond(w, ResponseStr, ResponseCode)
+}
+
+func respond(w http.ResponseWriter, ResponseStr string, ResponseCode int) {
+	res := Reponse{
+		Code:   ResponseCode,
+		Result: ResponseStr,
+	}
+
+	json, err := json.Marshal(res)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
 }
 
 func main() {
@@ -26,5 +64,8 @@ func main() {
 	// Starts the web server
 	// The first argument in this method is the port you want your server to run on
 	// The second is a handler. However we have already added this in the line above so we just pass in nil
-	http.ListenAndServe(":8000", nil)
+	serivcePort := flag.Int("service_port", 8000, "Port that the webservice will run on")
+	flag.Parse()
+
+	http.ListenAndServe(":"+strconv.Itoa(*serivcePort), nil)
 }
