@@ -30,13 +30,14 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	var ResponseCode int
 	var ResponseStr string
 
-	if name == "" {
+	switch nameLength := len(name); {
+	case nameLength == 0:
 		ResponseCode = 403
 		ResponseStr = "Please set a name"
-	} else if len(name) < 2 {
+	case nameLength < 2:
 		ResponseCode = 403
 		ResponseStr = "Please supply a name longer than 1 character"
-	} else {
+	default:
 		ResponseCode = 200
 		ResponseStr = fmt.Sprintf("%s %s", "hello", r.FormValue("name"))
 	}
@@ -64,8 +65,8 @@ func main() {
 	// Starts the web server
 	// The first argument in this method is the port you want your server to run on
 	// The second is a handler. However we have already added this in the line above so we just pass in nil
-	serivcePort := flag.Int("service_port", 8000, "Port that the webservice will run on")
+	servicePort := flag.Int("service_port", 8000, "Port that the webservice will run on")
 	flag.Parse()
 
-	http.ListenAndServe(":"+strconv.Itoa(*serivcePort), nil)
+	http.ListenAndServe(":"+strconv.Itoa(*servicePort), nil)
 }
